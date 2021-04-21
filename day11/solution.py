@@ -1,7 +1,7 @@
 import string
 import regex as re
 import sys
-    
+import time    
 
 req1 = {'abc', 'bcd', 'cde', 'def', 'efg', 'fgh',
         'pqr', 'qrs', 'rst', 'stu', 'tuv', 'uvw', 'vwx', 'wxy', 'xyz'}
@@ -11,6 +11,11 @@ req2_exclude = {'i', 'o', 'l'}
 
 valid_letter = [i for i in string.ascii_lowercase if i not in req2_exclude]
 alpha_to_num = {letter: idx for idx, letter in enumerate(valid_letter)}
+
+alpha_to_num['i'] = 7
+alpha_to_num['l'] = 9
+alpha_to_num['o'] = 11
+
 num_to_alpha = {idx: letter for idx, letter in enumerate(valid_letter)}
 
 def check_req1(s):
@@ -38,6 +43,7 @@ def get_next(pass_reversed, idx):
         print('The password has reached its upper bound')
         return
     else:  
+        
         curr = alpha_to_num[pass_reversed[idx]]
         if curr == 22:
             pass_reversed[idx] = 'a'
@@ -58,7 +64,16 @@ def main(password):
 
 if __name__ == '__main__':
     # password = 'vzbxxyzz'
+
+
+    start = time.time()
     password = open(sys.argv[1], 'r').read().strip()
+
+    for idx, w in enumerate(password):
+        if w in req2_exclude:
+            password = password[:idx] + num_to_alpha[alpha_to_num[w] + 1] + 'a' * (7 - idx)
+            break
+
     print('input is ', password)
     ans1_reverse = main(password)
     ans1 = ''.join(ans1_reverse[::-1]) 
@@ -66,5 +81,8 @@ if __name__ == '__main__':
     ans2_reverse = main(ans1)
     ans2 = ''.join(ans2_reverse[::-1])  
     print('Answer for part2: ', ans2) 
+    end = time.time()
+
+    print('time elapsed: ', end - start)
 
         
