@@ -27,12 +27,12 @@ def solve(people_lst, seated, happy_dict):
     ans = [0]
     n = len(people_lst)
 
-    def helper(ans, people_lst, n, seated, happy_dict, depth = 0, start = None, curr = None, solution = 0):
+    def helper(ans, people_lst, n, seated, happy_dict, depth = 0, start = None, curr = None, units_so_far = 0):
         if depth == 1:
             start = curr
 
         if depth == n:
-            ans[0] = max(ans[0], solution + happy_dict[start][curr] + happy_dict[curr][start]) 
+            ans[0] = max(ans[0], units_so_far + happy_dict[start][curr] + happy_dict[curr][start]) 
             # ans.append(solution + happy_dict[start][curr] + happy_dict[curr][start])
             return
 
@@ -41,9 +41,9 @@ def solve(people_lst, seated, happy_dict):
                 continue
             seated[i] = True
             if depth == 0:
-                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, solution)
+                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, units_so_far)
             else:
-                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, solution + happy_dict[i][curr] + happy_dict[curr][i])
+                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, units_so_far + happy_dict[i][curr] + happy_dict[curr][i])
             seated[i] = False
 
         return
