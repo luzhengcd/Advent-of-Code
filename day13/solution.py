@@ -16,53 +16,59 @@ def parse_input(input_path):
                 happiness_dict[name1][name2] = -int(words[3])
     return happiness_dict
 
-def get_input_part2(happy_dict_part1):
-    keys = list(happy_dict_part1.keys())
+def get_input_part2(dict_part1):
+    keys = list(dict_part1.keys())
     for i in keys:
-        happy_dict_part1['me'][i] = 0
-        happy_dict_part1[i]['me'] = 0
-    return happy_dict_part1
+        dict_part1['me'][i] = 0
+        dict_part1[i]['me'] = 0
+    return dict_part1
         
-ans = 0
-def solve(people_lst, n, depth, curr, seated, happy_dict, start = None, solution = 0):
-    global ans
-    if depth == 1:
-        start = curr
+def solve(people_lst, seated, happy_dict):
+    ans = [0]
+    n = len(people_lst)
 
-    if depth == n:
-        ans = max(ans, solution + happy_dict[start][curr] + happy_dict[curr][start])
+    def helper(ans, people_lst, n, seated, happy_dict, depth = 0, start = None, curr = None, solution = 0):
+        if depth == 1:
+            start = curr
+
+        if depth == n:
+            ans[0] = max(ans[0], solution + happy_dict[start][curr] + happy_dict[curr][start]) 
+            # ans.append(solution + happy_dict[start][curr] + happy_dict[curr][start])
+            return
+
+        for i in people_lst:
+            if seated[i]:
+                continue
+            seated[i] = True
+            if depth == 0:
+                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, solution)
+            else:
+                helper(ans, people_lst, n, seated, happy_dict, depth + 1, start, i, solution + happy_dict[i][curr] + happy_dict[curr][i])
+            seated[i] = False
+
         return
-
-    for i in people_lst:
-        if seated[i]:
-            continue
-        seated[i] = True
-        if depth == 0:
-            solve(people_lst, n, depth + 1, i, seated, happy_dict, start, solution)
-        else:
-            solve(people_lst, n, depth + 1, i, seated, happy_dict, start, solution + happy_dict[i][curr] + happy_dict[curr][i])
-        seated[i] = False
-
-    return
         
+    helper(ans, people_lst, n, seated, happy_dict)
+    return max(ans)
 
 
-start = time.time()
-happiness_dict = parse_input('input.txt')
-people_lst = list(happiness_dict.keys())
-seated = {p:False for p in people_lst}
-n = len(people_lst)
+def main():
 
-happiness_dict_part2 = get_input_part2(happiness_dict)
-solve(people_lst, n, 0, None, seated, happiness_dict, start = None, solution = 0)
-print(ans)
+    # part 1    
+    dict_part1 = parse_input('input.txt')
+    people_lst = list(dict_part1.keys())
+    seated = {p:False for p in people_lst}
+    ans1 = solve(people_lst, seated, dict_part1)
+    print('Answer for part1: ', ans1)
 
-ans = 0
-people_lst2 = list(happiness_dict_part2.keys())
-seated2 = {p:False for p in people_lst2}
-n = len(people_lst2)
-solve(people_lst2, n, 0, None, seated2, happiness_dict_part2, start = None, solution = 0)
-print(ans)
-print('Time: ', time.time() - start)
-# if __name__ == '__main__':
-#     main()
+    # part 2
+    dict_part2 = get_input_part2(dict_part1)
+    people_lst2 = list(dict_part2.keys())
+    seated2 = {p: False for p in people_lst2}
+    ans2 = solve(people_lst2, seated2, dict_part2)
+    print('Answer for part2: ', ans2)
+
+if __name__ == '__main__':
+    start = time.time()
+    main()
+    print('Time: ', time.time() - start)
