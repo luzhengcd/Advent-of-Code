@@ -14,6 +14,14 @@ def parse_input(input_path = 'input.txt'):
             reindeers[reindeer] = Reindeer(int(speed), int(fly_duration), int(rest_duration))
     return reindeers
 
+def solve_part1(competition_time, reindeers):
+    answer1 = 0
+    for _, fly_info in reindeers.items():
+        speed, fly_duration, rest_duration = fly_info.speed, fly_info.fly_duration, fly_info.rest_duration
+        n, remaining = divmod(competition_time, fly_duration + rest_duration)
+        answer1 = max(answer1, speed * (n * fly_duration + min(remaining, fly_duration)))
+    return answer1
+
 def solve_part2(competition_time, reindeers):
 
     point_tracker = defaultdict(int)
@@ -53,17 +61,12 @@ def main():
     else:
         reindeers = parse_input(sys.argv[-1])
 
-    reindeers = parse_input()
     competition_time = 2503
 
-    answer1 = 0
-    for _, fly_info in reindeers.items():
-        speed, fly_duration, rest_duration = fly_info.speed, fly_info.fly_duration, fly_info.rest_duration
-        n, remaining = divmod(competition_time, fly_duration + rest_duration)
-        answer1 = max(answer1, speed * (n * fly_duration + min(remaining, fly_duration)))
+    
+    answer1 = solve_part1(competition_time, reindeers)
     print('Answer for part 1: ', answer1)
 
-    # part 2
     answer2 = solve_part2(competition_time, reindeers)
     print('Answer for part 2: ', answer2)
 
