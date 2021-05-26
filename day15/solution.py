@@ -3,6 +3,9 @@ from collections import namedtuple
 import sys
 import subprocess
 
+# Gekko is a python package that's capable of solving non-linear mixed integer optimization problems.
+# For information about gekko, check out https://gekko.readthedocs.io/en/latest/
+
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
@@ -26,16 +29,16 @@ def parse_input(input_path = 'input.txt'):
 
 def solve_part1(data):
     # part 1
-    prob = GEKKO() # Initialize gekko
-    prob.options.SOLVER=1  # APOPT is an MINLP solver
 
-    # Initialize variables
+    # initialize gekko
+    prob = GEKKO() 
+
+    # initialize variables
     Sprinkles = prob.Var(value=25,lb=0,ub=100, integer = True)
     PeanutButter = prob.Var(value=25,lb=0,ub=100, integer = True)
     Frosting = prob.Var(value=25,lb=0,ub=100, integer = True)
     Sugar = prob.Var(value=25,lb=0,ub=100, integer = True)
 
-    # Equations
     capacity = Sprinkles * data['Sprinkles'].capacity + PeanutButter * data['PeanutButter'].capacity + \
                 Frosting * data['Frosting'].capacity + Sugar * data['Sugar'].capacity
     durability = Sprinkles * data['Sprinkles'].durability + PeanutButter * data['PeanutButter'].durability + \
@@ -45,14 +48,16 @@ def solve_part1(data):
     texture = Sprinkles * data['Sprinkles'].texture + PeanutButter * data['PeanutButter'].texture + \
                 Frosting * data['Frosting'].texture + Sugar * data['Sugar'].texture
 
+    # add constraints
     prob.Equation(Sprinkles + PeanutButter + Frosting + Sugar == 100)
     prob.Equation(capacity >= 0)
     prob.Equation(durability >= 0)
     prob.Equation(flavor >= 0)
     prob.Equation(texture >= 0)
 
-    prob.Obj(- capacity * durability * flavor * texture) # Objective
-    prob.solve(disp=False) # Solve
+    # specify objective function, add a minus to convert a maximization problem to a minimization problem.
+    prob.Obj(- capacity * durability * flavor * texture)
+    prob.solve(disp=False)
 
     print('Results: ')
     print('Sprinkles: ' + str(Sprinkles.value))
