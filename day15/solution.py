@@ -1,10 +1,24 @@
 
+'''
+README:
+
+Unfortunately, this solution does not produce the right answer for part two. 
+I am not able to come up with a new solution due to the time constraints.
+
+I tried bug shoot with the example in the problem description, and it worked perfectly. 
+One possible explanation I could think of is that the initial guess and the solver may affect the optimization.
+With different initial guesses for part 1, I did get different answers. 
+But for part 2, I didn't have the luck to hit the right answer by varying the initial guess.
+'''
+
 from collections import namedtuple
 import sys
 import subprocess
+import numpy as np
+
 
 # Gekko is a python package that's capable of solving non-linear mixed integer optimization problems.
-# For information about gekko, check out https://gekko.readthedocs.io/en/latest/
+# For more information about gekko, check out https://gekko.readthedocs.io/en/latest/
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -18,13 +32,12 @@ except ModuleNotFoundError:
     from gekko import GEKKO
 
 def parse_input(input_path = 'input.txt'):
-    Ingredient = namedtuple('Ingredient', ['capacity', 'durability', 'flavor', 'texture', 'calories'])
     ingredients = {}
     with open(input_path) as f:
         for line in f:
             words = line.split()
             ingredient, capacity, durability, flavor, texture, calories = words[0], words[2], words[4], words[6], words[8], words[10]
-            ingredients[ingredient[:-1]] = Ingredient(int(capacity.strip(',')), int(durability.strip(',')), int(flavor.strip(',')), int(texture.strip(',')), int(calories.strip(',')))
+            ingredients[ingredient] = [int(capacity.strip(',')), int(durability.strip(',')), int(flavor.strip(',')), int(texture.strip(',')), int(calories.strip(','))]
     return ingredients
 
 def solve_part1(data):
@@ -32,39 +45,45 @@ def solve_part1(data):
 
     # initialize gekko
     prob = GEKKO() 
+    prob.options.SOLVER = 1
 
     # initialize variables
-    Sprinkles = prob.Var(value=25,lb=0,ub=100, integer = True)
-    PeanutButter = prob.Var(value=25,lb=0,ub=100, integer = True)
-    Frosting = prob.Var(value=25,lb=0,ub=100, integer = True)
-    Sugar = prob.Var(value=25,lb=0,ub=100, integer = True)
+    ingredients = list(data.keys())
 
-    capacity = Sprinkles * data['Sprinkles'].capacity + PeanutButter * data['PeanutButter'].capacity + \
-                Frosting * data['Frosting'].capacity + Sugar * data['Sugar'].capacity
-    durability = Sprinkles * data['Sprinkles'].durability + PeanutButter * data['PeanutButter'].durability + \
-                Frosting * data['Frosting'].durability + Sugar * data['Sugar'].durability
-    flavor = Sprinkles * data['Sprinkles'].flavor + PeanutButter * data['PeanutButter'].flavor + \
-                Frosting * data['Frosting'].flavor + Sugar * data['Sugar'].flavor
-    texture = Sprinkles * data['Sprinkles'].texture + PeanutButter * data['PeanutButter'].texture + \
-                Frosting * data['Frosting'].texture + Sugar * data['Sugar'].texture
+    vars_dict = {}
+    for i in ingredients:
+        vars_dict[i] = prob.Var(value= 0,lb = 0, ub=100, integer = True) 
 
-    # add constraints
-    prob.Equation(Sprinkles + PeanutButter + Frosting + Sugar == 100)
-    prob.Equation(capacity >= 0)
-    prob.Equation(durability >= 0)
-    prob.Equation(flavor >= 0)
-    prob.Equation(texture >= 0)
+    constraints_dict = {}
+    properties = ['capacity', 'durability', 'flavor', 'texture', 'calories']
+    property_idx = {prop : idx for idx, prop in enumerate(properties)}
 
+    for prop in properties[:-1]: 
+        score = prob.sum([vars_dict[i] * data[i][property_idx[prop]] for i in ingredients])
+        constraints_dict[prop] = score
+
+        # decide to keep this constraint 
+        # I tried if2/if3 in Gekko to change the score to 0 when it goes negative, but it didn't work very well
+
+        # keep the constraints and hope for a valid input that gives us a solution...
+        prob.Equation(score >= 0)
+
+    prob.Equation(prob.sum([i for i in vars_dict.values()]) == 100)
+
+    # part 2
+    # add the calories constraint
+    prob.Equation(prob.sum([vars_dict[i] * data[i][property_idx['calories']] for i in ingredients]) == 500)
+    
     # specify objective function, add a minus to convert a maximization problem to a minimization problem.
-    prob.Obj(- capacity * durability * flavor * texture)
+    prob.Obj(-np.prod([i for i in list(constraints_dict.values())]))
     prob.solve(disp=False)
-
+   
     print('Results: ')
-    print('Sprinkles: ' + str(Sprinkles.value))
-    print('PeanutButter: ' + str(PeanutButter.value))
-    print('Frosting: ' + str(Frosting.value))
-    print('Sugar: ' + str(Sugar.value))
+    for i in ingredients:
+        print(i + str(vars_dict[i].value))
+ 
     print('Objective: ' + str(-prob.options.objfcnval))
+
 
 
 def main():
